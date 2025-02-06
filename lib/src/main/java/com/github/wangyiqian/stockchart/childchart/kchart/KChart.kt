@@ -605,7 +605,7 @@ open class KChart(
         )
         indexPaint.strokeWidth = chartConfig.indexStrokeWidth
         indexList?.forEachIndexed { lineIdx, pointList ->
-            chartConfig.indexColors?.let { indexColors ->
+            chartConfig.indexColors.let { indexColors ->
                 if (lineIdx < indexColors.size) {
                     indexPaint.color = indexColors[lineIdx]
                     var preIdx = -1
@@ -663,7 +663,7 @@ open class KChart(
                 }
                 var isFirstLine = true
                 indexList.forEachIndexed { lineIdx, pointList ->
-                    chartConfig.indexColors?.let { indexColors ->
+                    chartConfig.indexColors.let { indexColors ->
                         if (lineIdx < indexColors.size) {
                             indexTextPaint.color = indexColors[lineIdx]
                             val value =
@@ -970,6 +970,7 @@ open class KChart(
     }
 
     private fun drawLineKChart(canvas: Canvas) {
+        //离屏缓冲区
         val saveCount = canvas.saveLayer(
             getChartMainDisplayArea().left,
             getChartDisplayArea().top,
@@ -977,10 +978,13 @@ open class KChart(
             getChartDisplayArea().bottom,
             null
         )
+        //折线图(分时线)才会用到
         lineKChartLinePaint.strokeWidth = chartConfig.lineChartStrokeWidth
         lineKChartLinePaint.color = chartConfig.lineChartColor
-        var preIdx = -1
+
+        var preIdx = -1 //用于记录前一个有效的索引，用于绘制两点之间的连线。
         for (idx in getKEntities().indices) {
+            //返回 K 线数据的列表，containFlag(FLAG_EMPTY) 检查当前数据是否为空数据（如无效的点），containFlag(FLAG_LINE_STARTER) 判断是否为折线图的起始点。
             if (getKEntities()[idx].containFlag(FLAG_EMPTY)) {
                 preIdx = -1
                 continue
