@@ -14,17 +14,23 @@
 package com.github.wangyiqian.stockchart.sample
 
 import android.content.Context
+import com.github.wangyiqian.stockchart.entities.FLAG_EMPTY
 import com.github.wangyiqian.stockchart.entities.FLAG_LINE_STARTER
 import com.github.wangyiqian.stockchart.entities.IKEntity
 import com.github.wangyiqian.stockchart.entities.KEntity
 import com.github.wangyiqian.stockchart.sample.sample3.data.ActiveChartKEntity
 import com.github.wangyiqian.stockchart.sample.sample3.data.ActiveInfo
 import com.github.wangyiqian.stockchart.sample.sample3.data.ActiveResponse
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
 
 /**
  * 模拟加载数据
@@ -39,7 +45,12 @@ object DataMock {
     fun loadDayTimeData(context: Context, callback: (List<IKEntity>) -> Unit) {
         MainScope().launch {
             delay(MOCK_DELAY)
-            callback.invoke(loadDataFromTimeDataAsserts(context, "mock_time_data_day.txt"))
+            val list = loadDataFromTimeDataAsserts(context, "mock_time_data_day.txt")
+            val stockList: List<IKEntity> = List(10) {
+                KEntity(0f, 0f, 0f, 0f, 0, 0, 0f, FLAG_EMPTY)
+            }
+            list.addAll(stockList)
+            callback.invoke(list)
         }
     }
 
@@ -156,7 +167,12 @@ object DataMock {
     ) {
         MainScope().launch {
             delay(MOCK_DELAY)
-            callback.invoke(loadDataFromAsserts(context, assertsFileName))
+            val list = loadDataFromAsserts(context, assertsFileName)
+            val stockList: List<IKEntity> = List(10) {
+                KEntity(0f, 0f, 0f, 0f, 0, 0, 0f, FLAG_EMPTY)
+            }
+            list.addAll(stockList)
+            callback.invoke(list)
         }
     }
 

@@ -605,7 +605,7 @@ open class KChart(
         )
         indexPaint.strokeWidth = chartConfig.indexStrokeWidth
         indexList?.forEachIndexed { lineIdx, pointList ->
-            chartConfig.indexColors?.let { indexColors ->
+            chartConfig.indexColors.let { indexColors ->
                 if (lineIdx < indexColors.size) {
                     indexPaint.color = indexColors[lineIdx]
                     var preIdx = -1
@@ -663,7 +663,7 @@ open class KChart(
                 }
                 var isFirstLine = true
                 indexList.forEachIndexed { lineIdx, pointList ->
-                    chartConfig.indexColors?.let { indexColors ->
+                    chartConfig.indexColors.let { indexColors ->
                         if (lineIdx < indexColors.size) {
                             indexTextPaint.color = indexColors[lineIdx]
                             val value =
@@ -970,6 +970,7 @@ open class KChart(
     }
 
     private fun drawLineKChart(canvas: Canvas) {
+        //离屏缓冲区
         val saveCount = canvas.saveLayer(
             getChartMainDisplayArea().left,
             getChartDisplayArea().top,
@@ -977,6 +978,7 @@ open class KChart(
             getChartDisplayArea().bottom,
             null
         )
+        //折线图(分时线)才会用到
         lineKChartLinePaint.strokeWidth = chartConfig.lineChartStrokeWidth
         lineKChartLinePaint.color = chartConfig.lineChartColor
         var preIdx = -1
