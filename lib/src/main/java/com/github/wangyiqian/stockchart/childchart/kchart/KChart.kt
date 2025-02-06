@@ -33,44 +33,64 @@ open class KChart(
     chartConfig: KChartConfig
 ) : BaseChildChart<KChartConfig>(stockChart, chartConfig) {
 
+    //K线绘制效果
     private val lineKChartLinePaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+    //蜡烛k图绘制效果
     private val candleKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+    //空心蜡烛绘制效果
     private val hollowKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+    //K条形图绘制效果
     private val barKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+    //山峰图绘制效果
     private val mountainKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+    //山地渐变 K 图表画图
     private val mountainGradientKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { isDither = true }
     }
+    //山地线性坡度
     private var mountainLinearGradient: LinearGradient? = null
+    //山峰图的封闭渐变色
     private var mountainLinearGradientColors = intArrayOf()
+    //高光水平线条绘制
     private val highlightHorizontalLinePaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //高光垂直线绘制
     private val highlightVerticalLinePaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //成本价 线涂料
     private val costPriceLinePaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //高亮标签绘制
     private val highlightLabelPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //高亮标签 BG 绘画
     private val highlightLabelBgPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //索引涂料
     private val indexPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+    //索引文本绘制
     private val indexTextPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //最高和最低的标签涂料
     private val highestAndLowestLabelPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //标签涂料
     private val labelPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+    //平均价格线油漆
     private val avgPriceLinePaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
-
+    //索引列表
     private var indexList: List<List<Float?>>? = null
+    //上次计算索引类型
     private var lastCalculateIndexType: Index? = null
 
+    //绘制的索引文本高度
     private var drawnIndexTextHeight = 0f
 
     override fun onKEntitiesChanged() {

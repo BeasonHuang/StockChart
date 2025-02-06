@@ -121,6 +121,9 @@ class StockChart @JvmOverloads constructor(context: Context, attrs: AttributeSet
         }
     }
 
+    /**
+     * 获取显示区域最后一个不为空的K线数据点下标
+     */
     override fun findLastNotEmptyKEntityIdxInDisplayArea(): Int? {
         if (childCharts.isEmpty()) return null
         val chartDisplayArea = childCharts[0].getChartDisplayArea()
@@ -141,6 +144,9 @@ class StockChart @JvmOverloads constructor(context: Context, attrs: AttributeSet
         return result
     }
 
+    /**
+     * 获取显示区域第一个不为空的K线数据点下标
+     */
     override fun findFirstNotEmptyKEntityIdxInDisplayArea(): Int? {
         if (childCharts.isEmpty()) return null
         val chartDisplayArea = childCharts[0].getChartDisplayArea()
