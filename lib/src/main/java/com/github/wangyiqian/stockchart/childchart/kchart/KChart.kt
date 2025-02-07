@@ -13,7 +13,10 @@
 
 package com.github.wangyiqian.stockchart.childchart.kchart
 
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Shader
 import com.github.wangyiqian.stockchart.IStockChart
 import com.github.wangyiqian.stockchart.childchart.base.BaseChildChart
 import com.github.wangyiqian.stockchart.entities.FLAG_EMPTY
@@ -37,56 +40,75 @@ open class KChart(
     private val lineKChartLinePaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+
     //蜡烛k图绘制效果
     private val candleKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+
     //空心蜡烛绘制效果
     private val hollowKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+
     //K条形图绘制效果
     private val barKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+
     //山峰图绘制效果
     private val mountainKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+
     //山地渐变 K 图表画图
     private val mountainGradientKChartPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { isDither = true }
     }
+
     //山地线性坡度
     private var mountainLinearGradient: LinearGradient? = null
+
     //山峰图的封闭渐变色
     private var mountainLinearGradientColors = intArrayOf()
+
     //高光水平线条绘制
     private val highlightHorizontalLinePaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //高光垂直线绘制
     private val highlightVerticalLinePaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //成本价 线涂料
     private val costPriceLinePaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //高亮标签绘制
     private val highlightLabelPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //高亮标签 BG 绘画
     private val highlightLabelBgPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //索引涂料
     private val indexPaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+
     //索引文本绘制
     private val indexTextPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //最高和最低的标签涂料
     private val highestAndLowestLabelPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //标签涂料
     private val labelPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
+
     //平均价格线油漆
     private val avgPriceLinePaint by lazy {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     }
+
     //索引列表
     private var indexList: List<List<Float?>>? = null
+
     //上次计算索引类型
     private var lastCalculateIndexType: Index? = null
 
@@ -105,6 +127,7 @@ open class KChart(
                 is Index.MA, is Index.EMA, is Index.BOLL -> {
                     indexList = calculate(getKEntities())
                 }
+
                 else -> {
                 }
             }
@@ -155,6 +178,7 @@ open class KChart(
                         yMin = minBy { it.getLowPrice() }?.getLowPrice() ?: 0f
                         yMax = maxBy { it.getHighPrice() }?.getHighPrice() ?: 0f
                     }
+
                     else -> {
                         forEachIndexed { index, kEntity ->
                             if (index == 0) {
@@ -209,28 +233,38 @@ open class KChart(
     override fun drawData(canvas: Canvas) {
         when (chartConfig.kChartType) {
             is KChartConfig.KChartType.LINE -> {
+                //绘制K线分时线，折线图
                 drawLineKChart(canvas)
             }
+
             is KChartConfig.KChartType.CANDLE -> {
                 drawCandleKChart(canvas)
             }
+
             is KChartConfig.KChartType.HOLLOW -> {
                 drawHollowKChart(canvas)
             }
+
             is KChartConfig.KChartType.MOUNTAIN -> {
                 drawMountainKChart(canvas)
             }
+
             is KChartConfig.KChartType.BAR -> {
                 drawBarKChart(canvas)
             }
         }
+        //绘制均线
         drawAvgPriceLine(canvas)
+        //绘制最高最低价格
         drawHighestAndLowestLabel(canvas)
+        //绘制指标线和指标文本
         drawIndex(canvas)
     }
 
     override fun preDrawHighlight(canvas: Canvas) {
+        //绘制均线线条，需要设置kChartConfig.costPrice
         drawCostPriceLine(canvas)
+        //绘制左右价格标签label
         drawLabels(canvas)
     }
 
@@ -570,11 +604,14 @@ open class KChart(
         tmp2FloatArray[0] = idx + 0.5f
         tmp2FloatArray[1] = price
         mapPointsValue2Real(tmp2FloatArray)
+        //确定标签绘制方向
         val isLeft =
             tmp2FloatArray[0] - getChartDisplayArea().left > (getChartDisplayArea().right - getChartDisplayArea().left) / 2
+        //计算水平线的终点
         val lineLength = config.lineLength
         val lineEndX =
             if (isLeft) tmp2FloatArray[0] - lineLength else tmp2FloatArray[0] + lineLength
+        //绘制水平线使用 canvas.drawLine 绘制一条从 (tmp2FloatArray[0], tmp2FloatArray[1]) 到 (lineEndX, tmp2FloatArray[1]) 的水平线，表示价格标签的线段
         canvas.drawLine(
             tmp2FloatArray[0],
             tmp2FloatArray[1],
@@ -582,20 +619,31 @@ open class KChart(
             tmp2FloatArray[1],
             highestAndLowestLabelPaint
         )
+        //绘制价格文本
         val text = "${config.formatter.invoke(price)}"
+        //计算文本的宽度，这有助于确定文本的起始位置，避免文本超出画布
         val textWidth = highestAndLowestLabelPaint.measureText(text)
+        //根据 isLeft 的值计算文本的 X 坐标。如果标签位于左侧，文本应从水平线的左边开始，否则从右边开始
         val textStartX = if (isLeft) lineEndX - textWidth else lineEndX
+        //获取当前画笔的字体度量信息，用于计算文本的基线
         highestAndLowestLabelPaint.getFontMetrics(tmpFontMetrics)
+        //计算文本的基线 Y 坐标，以确保文本在垂直方向居中显示。baseLine 是基于价格点 tmp2FloatArray[1] 加上字体的上升和下降高度来计算的
         val baseLine =
             tmp2FloatArray[1] + (tmpFontMetrics.bottom - tmpFontMetrics.top) / 2 - tmpFontMetrics.bottom
         canvas.drawText(text, textStartX, baseLine, highestAndLowestLabelPaint)
     }
 
+    /**
+     * 个方法 drawIndex 用于在自定义的股票或K线图表中绘制技术指标（如均线、MACD等）和相关文本信息。
+     * 它分为两部分：一部分用于绘制指标曲线，另一部分用于绘制指标的文本信息。
+     */
     private fun drawIndex(canvas: Canvas) {
+        //drawnIndexTextHeight = 0f：初始化绘制的文本高度，用于后续计算文本占据的垂直空间。
         drawnIndexTextHeight = 0f
         if (chartConfig.index == null) {
             return
         }
+        //保存当前画布的状态，并创建一个新的绘图层，便于后续操作恢复画布状态，避免影响其他绘制内容。
         val saveCount = canvas.saveLayer(
             getChartMainDisplayArea().left,
             getChartDisplayArea().top,
@@ -603,28 +651,38 @@ open class KChart(
             getChartDisplayArea().bottom,
             null
         )
+        //设置指标线条的宽度，来自配置 chartConfig.indexStrokeWidth
         indexPaint.strokeWidth = chartConfig.indexStrokeWidth
+
+        //指标数据的列表，可能包含多条指标线（如多条均线）。
+        //lineIdx：当前绘制的指标线索引。
+        //indexColors：配置的指标线颜色数组。
+        //indexPaint.color = indexColors[lineIdx]：根据当前指标线的索引设置颜色。
         indexList?.forEachIndexed { lineIdx, pointList ->
             chartConfig.indexColors.let { indexColors ->
                 if (lineIdx < indexColors.size) {
                     indexPaint.color = indexColors[lineIdx]
+                    //preIdx = -1：初始化上一个有效点的索引，用于绘制连续线段。
                     var preIdx = -1
+                    //pointList.forEachIndexed：遍历当前指标线的每个数据点。
                     pointList.forEachIndexed { pointIdx, point ->
+                        //if (point == null)：如果当前点为空，则跳过绘制，并重置 preIdx，避免绘制无效的线段。
                         if (point == null) {
                             preIdx = -1
                             return@forEachIndexed
                         }
-
+                        //如果 preIdx 是初始值，表示这是第一个有效点，保存索引但不绘制线段。
                         if (preIdx == -1) {
                             preIdx = pointIdx
                             return@forEachIndexed
                         }
-
+                        //将逻辑坐标转换为实际的屏幕坐标。
                         tmp4FloatArray[0] = preIdx + 0.5f
                         tmp4FloatArray[1] = pointList[preIdx]!!
                         tmp4FloatArray[2] = pointIdx + 0.5f
                         tmp4FloatArray[3] = pointList[pointIdx]!!
                         mapPointsValue2Real(tmp4FloatArray)
+                        //绘制从前一个点到当前点的线段，形成指标线。
                         canvas.drawLine(
                             tmp4FloatArray[0],
                             tmp4FloatArray[1],
@@ -632,24 +690,34 @@ open class KChart(
                             tmp4FloatArray[3],
                             indexPaint
                         )
+                        //更新 preIdx 为当前点索引，为下一个线段的绘制做准备。
                         preIdx = pointIdx
                     }
                 }
             }
         }
+        //恢复画布到调用 saveLayer 之前的状态，确保接下来的绘制不受影响。
         canvas.restoreToCount(saveCount)
 
         // draw index text
-        chartConfig.index?.let { index ->
+        // 绘制指标文本
+        chartConfig.index?.let { index -> //获取当前的指标配置，包含文本样式和格式化信息。
             indexList?.let { indexList ->
+                //获取当前高亮的点，通常是用户点击或长按选中的数据点。
                 val highlight = getHighlight()
+                //  确定要显示数据的索引。如果有高亮点，使用高亮点的索引，否则使用显示区域内的最后一个非空数据点
                 var indexIdx =
                     highlight?.getIdx() ?: stockChart.findLastNotEmptyKEntityIdxInDisplayArea()
+                // 设置文本大小。
                 indexTextPaint.textSize = index.textSize
+                //left 和 top：文本绘制的初始左边距和上边距。
                 var left = index.textMarginLeft
                 var top = index.textMarginTop
+                //计算文本的高度，用于确定行高和换行。
                 indexTextPaint.getFontMetrics(tmpFontMetrics)
                 val textHeight = tmpFontMetrics.bottom - tmpFontMetrics.top
+
+                //index.startText：绘制指标的起始文本（例如，指标名称）
                 if (!index.startText.isNullOrEmpty()) {
                     indexTextPaint.color = index.startTextColor
                     canvas.drawText(
@@ -658,19 +726,24 @@ open class KChart(
                         -tmpFontMetrics.top + top,
                         indexTextPaint
                     )
+                    //更新左边距，为下一个文本留出空间。
                     left += indexTextPaint.measureText(index.startText) + index.textSpace
+                    //记录已绘制文本的高度。
                     drawnIndexTextHeight = textHeight + index.textMarginTop
                 }
+
+                //绘制每条指标的数值文本
                 var isFirstLine = true
                 indexList.forEachIndexed { lineIdx, pointList ->
                     chartConfig.indexColors.let { indexColors ->
                         if (lineIdx < indexColors.size) {
                             indexTextPaint.color = indexColors[lineIdx]
+                            //获取当前指标在 indexIdx 位置的值。
                             val value =
                                 if (indexIdx != null && indexIdx in pointList.indices && pointList[indexIdx] != null) pointList[indexIdx] else null
                             val text = index.textFormatter.invoke(lineIdx, value)
                             val textWidth = indexTextPaint.measureText(text)
-
+                            //判断文本是否超出绘制区域宽度，如果超出则换行。
                             if (left + textWidth > getChartDisplayArea().width()) {
                                 // 需要换行
                                 isFirstLine = false
@@ -682,13 +755,14 @@ open class KChart(
                             if (isFirstLine) {
                                 drawnIndexTextHeight = textHeight + index.textMarginTop
                             }
-
+                            //绘制文本到画布上。
                             canvas.drawText(
                                 text,
                                 left,
                                 -tmpFontMetrics.top + top,
                                 indexTextPaint
                             )
+                            //更新左边距，准备绘制下一个文本。
                             left += indexTextPaint.measureText(text) + index.textSpace
                         }
                     }
@@ -969,6 +1043,7 @@ open class KChart(
         canvas.restoreToCount(saveCount)
     }
 
+    //绘制K线分时线，折线图
     private fun drawLineKChart(canvas: Canvas) {
         //离屏缓冲区
         val saveCount = canvas.saveLayer(
