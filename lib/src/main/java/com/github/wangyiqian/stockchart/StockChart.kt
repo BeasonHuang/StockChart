@@ -38,21 +38,26 @@ import kotlin.math.min
 class StockChart @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     ViewGroup(context, attrs),
     IStockChart {
-
+    //存储子图表（IChildChart）的列表，可能包含K线图、成交量图等。
     private val childCharts = mutableListOf<IChildChart>()
+    //处理触摸事件的辅助类，内部使用 TouchHelperCallBack 处理具体手势逻辑。
     private val touchHelper by lazy { TouchHelper(this, TouchHelperCallBack()) }
+    //用于监听K线数据变化的监听器集合
     private val onKEntitiesChangedListeners by lazy { mutableSetOf<OnKEntitiesChangedListener>() }
+    //负责处理缩放、平移等矩阵变换的工具类。
     private val matrixHelper by lazy { MatrixHelper(this) }
+    //存储子图表与高亮信息（Highlight）的映射。
     private val highlightMap by lazy { mutableMapOf<IChildChart, Highlight>() }
-    private var config: StockChartConfig =
-        StockChartConfig()
+    //存储图表配置（StockChartConfig），例如背景颜色、网格线设置等。
+    private var config: StockChartConfig = StockChartConfig()
     private val tmp2FloatArray by lazy { FloatArray(2) }
     private val tmp4FloatArray by lazy { FloatArray(4) }
+    //用于绘制背景网格的 Paint 对象。
     private val backgroundGridPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
 
     init {
-        setWillNotDraw(false)
-        setOnTouchListener(touchHelper)
+        setWillNotDraw(false) //告诉系统这个View需要调用onDraw方法
+        setOnTouchListener(touchHelper) // 设置触摸事件监听器
     }
 
     override fun getTouchArea() =
@@ -85,10 +90,10 @@ class StockChart @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
     @UiThread
     override fun notifyChanged() {
-        checkMainThread()
+        checkMainThread()// 检查是否在主线程调用
         if (config.setKEntitiesFlag) {
             config.setKEntitiesFlag = false
-            matrixHelper.resetMatrix()
+            matrixHelper.resetMatrix() // 重置矩阵（平移、缩放）
             onKEntitiesChangedListeners.forEach {
                 it.onSetKEntities()
             }
@@ -101,8 +106,8 @@ class StockChart @JvmOverloads constructor(context: Context, attrs: AttributeSet
             }
         }
 
-        checkChildViews()
-
+        checkChildViews() // 检查子视图是否需要更新
+        // 请求重新绘制
         invalidate()
         childCharts.forEach {
             it.invalidate()
@@ -223,45 +228,68 @@ class StockChart @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
     }
 
+    /**
+     * 用于测量子视图尺寸的关键方法。它负责测量所有子视图并计算当前容器视图的最终宽度和高度。
+     */
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         var height = 0
         var width = 0
+        //是包含所有子视图的集合。通过 .map { it.view() } 转换为子视图的 view() 对象。
         childCharts.map { it.view() }.forEach { childView ->
+            //获取子视图的布局参数（layoutParams），并将其转换为 LayoutParams 类型。
             val childLayoutParams = childView.layoutParams as LayoutParams
+            //用于测量子视图的大小，这个方法考虑了子视图的边距。
+            //它将 widthMeasureSpec 和 heightMeasureSpec 传递给子视图，确保子视图根据这些规格进行测量。
             measureChildWithMargins(childView, widthMeasureSpec, 0, heightMeasureSpec, height)
+            //累加子视图的高度到 height，并添加其上下边距（topMargin 和 bottomMargin）。
             height += childView.measuredHeight + childLayoutParams.topMargin + childLayoutParams.bottomMargin
+            //对于宽度，取所有子视图宽度（包括左右边距）中的最大值，累加到 width。
             width = max(
                 width,
                 childView.measuredWidth + childLayoutParams.leftMargin + childLayoutParams.rightMargin
             )
         }
-
+        //在计算完所有子视图的宽高后，再考虑到 ViewGroup 的内边距（paddingLeft, paddingRight, paddingTop, paddingBottom）。这将是整个视图的最终宽度和高度。
         width += paddingLeft + paddingRight
         height += paddingTop + paddingBottom
 
+        //setMeasuredDimension 方法最终确定当前视图的测量尺寸。
+        //View.resolveSize 根据给定的测量规格（widthMeasureSpec 和 heightMeasureSpec）来计算并返回适当的尺寸。
+        //这个方法确保当前视图的宽度和高度不超过父容器的约束尺寸。
         setMeasuredDimension(
             View.resolveSize(width, widthMeasureSpec),
             View.resolveSize(height, heightMeasureSpec)
         )
     }
 
+    /**
+     * 负责对子视图进行实际的布局定位。
+     * 它在 onMeasure 确定好尺寸后，根据测量的宽高将子视图放置在正确的位置。
+     */
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        //变量 childTop 表示子视图的顶部起始位置。初始化时将其设置为容器的上内边距 (paddingTop)，确保子视图不会覆盖容器的内边距区域。
         var childTop = paddingTop
         childCharts.map { it.view() }.forEach { childView ->
+            //获取子视图的测量宽高和布局参数
             val childMeasuredWidth = childView.measuredWidth
             val childMeasuredHeight = childView.measuredHeight
             val childLayoutParams = childView.layoutParams as LayoutParams
+            //子视图的左边界 (childLeft) 是容器左内边距 (paddingLeft) 加上子视图的左边距 (leftMargin)。
             val childLeft = paddingLeft + childLayoutParams.leftMargin
             childTop += childLayoutParams.topMargin
-
+            //使用 min 函数确保子视图的右边界不会超过容器的右边界（measuredWidth - paddingRight），避免越界绘制。
             val childRight = min(childLeft + childMeasuredWidth, measuredWidth - paddingRight)
+            //同样使用 min 函数，确保子视图不会超出容器的底部边界（measuredHeight - paddingBottom）。
             val childBottom = min(
                 childTop + childMeasuredHeight,
                 measuredHeight - paddingBottom
             )
+            //这里检查子视图是否有有效的宽高（即右边界大于左边界，底部边界大于顶部边界），以避免宽度或高度为负数的情况。
+            //如果尺寸有效，则调用 childView.layout() 方法，将子视图放置在计算好的位置。
             if (childRight > childLeft && childBottom > childTop) {
                 childView.layout(childLeft, childTop, childRight, childBottom)
             }
+            //在放置当前子视图之前，增加其顶部边距 (topMargin)，确保子视图不会与上一个子视图或容器顶部紧贴。
             childTop = childBottom + childLayoutParams.bottomMargin
         }
     }
