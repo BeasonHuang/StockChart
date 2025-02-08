@@ -14,6 +14,7 @@
 package com.github.wangyiqian.stockchart.sample
 
 import android.content.Context
+import com.github.wangyiqian.stockchart.entities.FLAG_DEFAULT
 import com.github.wangyiqian.stockchart.entities.FLAG_EMPTY
 import com.github.wangyiqian.stockchart.entities.FLAG_LINE_STARTER
 import com.github.wangyiqian.stockchart.entities.IKEntity
@@ -31,6 +32,8 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
+import kotlin.random.Random
 
 /**
  * 模拟加载数据
@@ -40,16 +43,21 @@ import java.util.Date
  */
 object DataMock {
 
+    const val basePrice = 100f  // 假设昨日收盘价为100
+    const val date = "2025-02-07"
+
     private const val MOCK_DELAY = 0L // 模拟耗时
 
     fun loadDayTimeData(context: Context, callback: (List<IKEntity>) -> Unit) {
         MainScope().launch {
             delay(MOCK_DELAY)
-            val list = loadDataFromTimeDataAsserts(context, "mock_time_data_day.txt")
-            val stockList: List<IKEntity> = List(10) {
-                KEntity(0f, 0f, 0f, 0f, 0, 0, 0f, FLAG_EMPTY)
-            }
-            list.addAll(stockList)
+
+            val list = StockDataGenerator.generateDailyStockData(basePrice, date)
+//            val list = loadDataFromTimeDataAsserts(context, "mock_time_data_day.txt")
+//            val stockList: List<IKEntity> = List(10) {
+//                KEntity(0f, 0f, 0f, 0f, 0, 0, 0f, FLAG_EMPTY)
+//            }
+//            list.addAll(stockList)
             callback.invoke(list)
         }
     }
@@ -281,5 +289,67 @@ object DataMock {
         }
 
     }
+}
 
+
+object StockDataGenerator {
+
+    // 模拟A股全天走势数据
+    fun generateDailyStockData(basePrice: Float, date: String): MutableList<IKEntity> {
+        val tradingTimes = getTradingTimestamps(date)
+        val stockDataList = mutableListOf<IKEntity>()
+        var lastClosePrice = basePrice
+
+        for (time in tradingTimes) {
+            val entity = generateMinuteData(lastClosePrice, time)
+            stockDataList.add(entity)
+            lastClosePrice = entity.getClosePrice()
+        }
+
+        return stockDataList
+    }
+
+    // 生成一分钟的数据
+    private fun generateMinuteData(lastClosePrice: Float, time: Long): KEntity {
+        val openPrice = lastClosePrice
+        val closePrice = openPrice * Random.nextDouble(0.995, 1.005).toFloat()  // 每分钟波动±0.5%
+        val highPrice = maxOf(openPrice, closePrice) * Random.nextDouble(1.0, 1.01).toFloat()
+        val lowPrice = minOf(openPrice, closePrice) * Random.nextDouble(0.99, 1.0).toFloat()
+        val volume = Random.nextLong(1000, 50000)  // 每分钟成交量
+
+        val avgPrice = (openPrice + closePrice + highPrice + lowPrice) / 4
+
+        return KEntity(
+            highPrice = highPrice,
+            lowPrice = lowPrice,
+            openPrice = openPrice,
+            closePrice = closePrice,
+            volume = volume,
+            time = time,
+            avgPrice = avgPrice,
+            flag = FLAG_EMPTY
+        )
+    }
+
+    // 获取A股交易时间戳（每分钟一条数据）
+    private fun getTradingTimestamps(date: String): List<Long> {
+        val periods = listOf(
+            Pair("09:30", "11:30"),
+            Pair("13:00", "15:00")
+        )
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val timestamps = mutableListOf<Long>()
+
+        for ((start, end) in periods) {
+            val startTime = sdf.parse("$date $start")!!.time
+            val endTime = sdf.parse("$date $end")!!.time
+
+            var currentTime = startTime
+            while (currentTime <= endTime) {
+                timestamps.add(currentTime)
+                currentTime += 60 * 1000 // 每分钟增加
+            }
+        }
+        return timestamps
+    }
 }

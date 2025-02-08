@@ -571,14 +571,15 @@ class TimeBar(stockChart: IStockChart, chartConfig: TimeBarConfig) :
     }
 
     private fun drawLabelOfDayTimeType(canvas: Canvas) {
-
-        stockChart.findFirstNotEmptyKEntityIdxInDisplayArea()?.let { idx ->
-            doDrawLabelOfDayTimeType(canvas, idx)
-        }
-
-        stockChart.findLastNotEmptyKEntityIdxInDisplayArea()?.let { idx ->
-            doDrawLabelOfDayTimeType(canvas, idx)
-        }
+//        stockChart.findFirstNotEmptyKEntityIdxInDisplayArea()?.let { idx ->
+//            doDrawLabelOfDayTimeType(canvas, idx)
+//        }
+//
+//        stockChart.findLastNotEmptyKEntityIdxInDisplayArea()?.let { idx ->
+//            doDrawLabelOfDayTimeType(canvas, idx)
+//        }
+        doDrawLabelOfDayTimeType(canvas, stockChart.getConfig().showStartIndex)
+        doDrawLabelOfDayTimeType(canvas, stockChart.getConfig().showEndIndex)
     }
 
     private fun doDrawLabelOfDayTimeType(canvas: Canvas, idx: Int) {

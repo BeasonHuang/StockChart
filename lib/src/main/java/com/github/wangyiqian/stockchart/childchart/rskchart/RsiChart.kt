@@ -60,8 +60,8 @@ class RsiChart(stockChart: IStockChart, chartConfig: RsiChartConfig) :
                             yMax = this[0]
                             yMin = this[0]
                         }
-                        yMax = kotlin.math.max(yMax, max()!!)
-                        yMin = kotlin.math.min(yMin, min()!!)
+                        yMax = kotlin.math.max(yMax, maxOrNull() ?: 0f)
+                        yMin = kotlin.math.min(yMin, minOrNull() ?: 0f)
                     }
                 }
         }

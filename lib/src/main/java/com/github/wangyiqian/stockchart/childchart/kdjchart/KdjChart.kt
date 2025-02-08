@@ -55,8 +55,8 @@ class KdjChart(stockChart: IStockChart, chartConfig: KdjChartConfig) :
             valueList.filterIndexed { idx, _ -> idx in startIndex..endIndex }.filterNotNull()
                 .apply {
                     if (size > 0) {
-                        yMax = kotlin.math.max(yMax, max()!!)
-                        yMin = kotlin.math.min(yMin, min()!!)
+                        yMax = kotlin.math.max(yMax, maxOrNull() ?: 0f)
+                        yMin = kotlin.math.min(yMin, minOrNull() ?: 0f)
                     }
                 }
         }

@@ -15,9 +15,11 @@ package com.github.wangyiqian.stockchart.sample.sample2
 
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.github.wangyiqian.stockchart.StockChartConfig
 import com.github.wangyiqian.stockchart.childchart.base.HighlightLabelConfig
 import com.github.wangyiqian.stockchart.childchart.kchart.KChartConfig
@@ -39,6 +41,7 @@ import com.github.wangyiqian.stockchart.listener.OnLoadMoreListener
 import com.github.wangyiqian.stockchart.sample.DataMock
 import com.github.wangyiqian.stockchart.sample.Util
 import com.github.wangyiqian.stockchart.sample.R
+import com.github.wangyiqian.stockchart.sample.StockTimer
 import com.github.wangyiqian.stockchart.sample.sample2.custom.CustomChartConfig
 import com.github.wangyiqian.stockchart.sample.sample2.custom.CustomChartFactory
 import com.github.wangyiqian.stockchart.util.DimensionUtil
@@ -46,12 +49,14 @@ import com.github.wangyiqian.stockchart.util.NumberFormatUtil
 import kotlinx.android.synthetic.main.activity_sample2.*
 import kotlinx.android.synthetic.main.activity_sample3.*
 import kotlinx.android.synthetic.main.layout_sample2_option_buttons.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * @author wangyiqian E-mail: wangyiqian9891@gmail.com
  * @version 创建时间: 2021/3/6
  */
-class Sample2Activity : AppCompatActivity() {
+class Sample2Activity : AppCompatActivity() , StockTimer.StockTimeListener{
 
     enum class Period {
         DAY,                // 日K
@@ -125,6 +130,7 @@ class Sample2Activity : AppCompatActivity() {
 
         // 切换到到日K，首次加载数据
         changePeriod(Period.DAY)
+        StockTimer.startStockTimer(DataMock.date, this)
     }
 
     /**
@@ -707,5 +713,21 @@ class Sample2Activity : AppCompatActivity() {
         }
 
         custom.isSelected = stockChartConfig.childChartFactories.contains(customChartFactory!!)
+    }
+
+    override fun onTick(time: Long) {
+        Log.i(TAG, "当前时间：$time")
+        stockChartConfig.kEntities.find { it.getTime() == time }?.setFlag(FLAG_DEFAULT)
+        stock_chart.notifyChanged()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // 停止定时任务
+        StockTimer.stopStockTimer()
+    }
+
+    companion object {
+        const val TAG = "Sample2Activity"
     }
 }

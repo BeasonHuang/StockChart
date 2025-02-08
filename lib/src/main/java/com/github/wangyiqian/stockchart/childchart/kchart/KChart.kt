@@ -175,8 +175,8 @@ open class KChart(
             .apply {
                 when (chartConfig.kChartType) {
                     is KChartConfig.KChartType.CANDLE, is KChartConfig.KChartType.HOLLOW, is KChartConfig.KChartType.BAR -> {
-                        yMin = minBy { it.getLowPrice() }?.getLowPrice() ?: 0f
-                        yMax = maxBy { it.getHighPrice() }?.getHighPrice() ?: 0f
+                        yMin = minByOrNull { it.getLowPrice() }?.getLowPrice() ?: 0f
+                        yMax = maxByOrNull { it.getHighPrice() }?.getHighPrice() ?: 0f
                     }
 
                     else -> {
@@ -202,9 +202,9 @@ open class KChart(
         indexList?.forEach { valueList ->
             valueList.filterIndexed { idx, _ -> idx in startIndex..endIndex }.filterNotNull()
                 .apply {
-                    if (size > 0) {
-                        yMax = max(yMax, max()!!)
-                        yMin = min(yMin, min()!!)
+                    if (isNotEmpty()) {
+                        yMax = max(yMax, maxOrNull() ?: 0f)
+                        yMin = min(yMin, minOrNull() ?: 0f)
                     }
                 }
         }
@@ -213,7 +213,7 @@ open class KChart(
             result[0] = yMin
             result[1] = yMax
         } else { // 约等于0
-            var delta = abs(chartConfig.costPrice ?: 0f - yMin) * 2
+            var delta = abs(chartConfig.costPrice ?: (0f - yMin)) * 2
             if (delta == yMin) {
                 delta = abs(yMin / 2f)
             }
@@ -708,6 +708,7 @@ open class KChart(
                 //  确定要显示数据的索引。如果有高亮点，使用高亮点的索引，否则使用显示区域内的最后一个非空数据点
                 var indexIdx =
                     highlight?.getIdx() ?: stockChart.findLastNotEmptyKEntityIdxInDisplayArea()
+
                 // 设置文本大小。
                 indexTextPaint.textSize = index.textSize
                 //left 和 top：文本绘制的初始左边距和上边距。

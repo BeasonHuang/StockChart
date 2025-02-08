@@ -11,6 +11,74 @@
  *
  */
 
+pluginManagement {
+    repositories { //todo 仓库请按本地》通用镜像》专用镜像》通用仓库》专用仓库优先级排序！！ 随意放会拖慢编译速度
+        mavenLocal()
+//        maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url "https://maven.aliyun.com/nexus/content/repositories/releases" }
+
+        gradlePluginPortal()
+        maven {
+            allowInsecureProtocol = true
+            url = 'http://nexus.ky-tech.com.cn:8081/repository/apk-aar/'
+        }
+        maven {
+            allowInsecureProtocol = true
+            url = 'http://nexus.ky-tech.com.cn:8081/repository/maven-public/'
+        }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        google()
+        mavenCentral()
+        maven { url 'https://developer.huawei.com/repo/' }
+        maven { url 'https://jitpack.io' }
+
+        // 配置SDK的Maven仓地址。
+        maven { url 'https://developer.hihonor.com/repo' }
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenLocal()
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url "https://maven.aliyun.com/nexus/content/repositories/releases" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+
+        google()
+        mavenCentral()
+        maven {
+            credentials {
+                username '61ea2ab27c015ec99cd3d0ea'
+                password 'siE9N(oHSGR3'
+            }
+            url 'https://packages.aliyun.com/maven/repository/2267954-release-r6wbtn/'
+        }
+        maven {
+            credentials {
+                username '61ea2ab27c015ec99cd3d0ea'
+                password 'siE9N(oHSGR3'
+            }
+            url 'https://packages.aliyun.com/maven/repository/2267954-snapshot-nmXKzb/'
+        }
+        maven { url 'https://developer.huawei.com/repo/' }
+        maven { url 'https://jitpack.io' }
+
+        // 配置SDK的Maven仓地址。
+        maven { url 'https://developer.hihonor.com/repo' }
+    }
+}
+
+
 include ':samples'
 include ':lib'
 rootProject.name = "StockChart"
