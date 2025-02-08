@@ -253,18 +253,22 @@ open class KChart(
             }
 
             is KChartConfig.KChartType.CANDLE -> {
+                //在 Canvas 上绘制 K 线图（蜡烛图）。
                 drawCandleKChart(canvas)
             }
 
             is KChartConfig.KChartType.HOLLOW -> {
+                //在 Canvas 上绘制 K 线图（空心蜡烛图）
                 drawHollowKChart(canvas)
             }
 
             is KChartConfig.KChartType.MOUNTAIN -> {
+                //山形图
                 drawMountainKChart(canvas)
             }
 
             is KChartConfig.KChartType.BAR -> {
+                //竹节（美国线）图
                 drawBarKChart(canvas)
             }
         }
@@ -787,6 +791,11 @@ open class KChart(
         }
     }
 
+    /**
+     *  山形图（Mountain Chart） 的绘制。
+     *  山形图常用于表示时间序列数据的走势，尤其在股票、加密货币等金融应用中用来直观地显示价格随时间的变化。
+     *  与传统的 K 线图相比，山形图通过渐变填充使得趋势更加平滑、直观。
+     */
     private fun drawMountainKChart(canvas: Canvas) {
         val saveCount = canvas.saveLayer(
             getChartMainDisplayArea().left,
@@ -799,23 +808,25 @@ open class KChart(
         mountainKChartPaint.strokeWidth = chartConfig.mountainChartStrokeWidth
         mountainKChartPaint.color = chartConfig.mountainChartColor
 
+        //如果当前的渐变颜色与配置不一致，则调用 setMountainLinearGradient() 更新渐变色。
+        // shader 用于为山形图填充渐变效果，提升图表的美观度。
         if (!mountainLinearGradientColors.contentEquals(chartConfig.mountainChartLinearGradientColors)) {
             setMountainLinearGradient()
         }
 
         mountainGradientKChartPaint.shader = mountainLinearGradient
-        tmpPath.reset()
 
+        //重置路径，准备开始绘制新的图形。
+        tmpPath.reset()
         tmp2FloatArray[1] = getChartDisplayArea().bottom
         mapPointsReal2Value(tmp2FloatArray)
+
+        //获取图表底部的 y 坐标，作为山形图的基线，填充区域会从数据点延伸到这个基线
         val yMinValue = tmp2FloatArray[1]
 
         var preIdx = -1
         for (idx in getKEntities().indices) {
-            if (getKEntities()[idx].containFlag(FLAG_EMPTY) || getKEntities()[idx].containFlag(
-                    FLAG_LINE_STARTER
-                )
-            ) {
+            if (getKEntities()[idx].containFlag(FLAG_EMPTY) || getKEntities()[idx].containFlag(FLAG_LINE_STARTER)) {
                 if (preIdx != -1) {
                     tmpPath.lineTo(preIdx + 1f, getKEntities()[preIdx].getClosePrice())
                     tmpPath.lineTo(preIdx + 1f, yMinValue)
@@ -834,8 +845,6 @@ open class KChart(
                 tmpPath.moveTo(preIdx.toFloat(), yMinValue)
                 tmpPath.lineTo(preIdx.toFloat(), getKEntities()[preIdx].getClosePrice())
                 tmpPath.lineTo(preIdx + 0.5f, getKEntities()[preIdx].getClosePrice())
-
-
             } else {
                 preIdx = idx
             }
@@ -926,7 +935,7 @@ open class KChart(
             canvas.restoreToCount(saveCount)
         }
     }
-
+    //竹节（美国线）图
     private fun drawBarKChart(canvas: Canvas) {
         val saveCount = canvas.saveLayer(
             getChartMainDisplayArea().left,
@@ -937,8 +946,12 @@ open class KChart(
         )
 
         barKChartPaint.strokeWidth = chartConfig.barChartLineStrokeWidth
+        //barWidth：每个柱子的实际宽度，基于 barSpaceRatio 控制柱子和柱子之间的间隔比例。
+        //barSpaceRatio 越大，柱子之间的空隙越大。
         val barWidth = 1 * (1 - chartConfig.barSpaceRatio)
+
         val spaceWidth = 1 * chartConfig.barSpaceRatio
+        //控制第一个柱子的起始位置，使柱子居中于空间内。
         var left = spaceWidth / 2f
         getKEntities().forEachIndexed { idx, kEntity ->
             if (!kEntity.containFlag(FLAG_EMPTY)) {
@@ -969,6 +982,8 @@ open class KChart(
         canvas.restoreToCount(saveCount)
     }
 
+    //空心 K 线图（Hollow Candlestick Chart） 的方法。
+    //相比于标准的实心 K 线图，这种图表通过空心和实心矩形区分涨跌，常用于提供更清晰的视觉效果，特别是在一些特定的金融分析中。
     private fun drawHollowKChart(canvas: Canvas) {
         val saveCount = canvas.saveLayer(
             getChartMainDisplayArea().left,
@@ -987,6 +1002,8 @@ open class KChart(
                 hollowKChartPaint.color =
                     if (isRise(idx)) stockChart.getConfig().riseColor else stockChart.getConfig().downColor
 
+                //在空心 K 线图中，上下影线被分成了两段，分别处理：
+                //上影线：从最高价到 开盘价和收盘价中的较高值。
                 tmp4FloatArray[0] = left + barWidth / 2
                 tmp4FloatArray[1] = kEntity.getHighPrice()
                 tmp4FloatArray[2] = tmp4FloatArray[0]
@@ -994,6 +1011,7 @@ open class KChart(
                 mapPointsValue2Real(tmp4FloatArray)
                 canvas.drawLines(tmp4FloatArray, hollowKChartPaint)
 
+                //下影线：从最低价到 开盘价和收盘价中的较低值。
                 tmp4FloatArray[0] = left + barWidth / 2
                 tmp4FloatArray[1] = kEntity.getLowPrice()
                 tmp4FloatArray[2] = tmp4FloatArray[0]
@@ -1001,11 +1019,13 @@ open class KChart(
                 mapPointsValue2Real(tmp4FloatArray)
                 canvas.drawLines(tmp4FloatArray, hollowKChartPaint)
 
+
                 tmpRectF.left = left
                 tmpRectF.top = kEntity.getOpenPrice()
                 tmpRectF.right = left + barWidth
                 tmpRectF.bottom = kEntity.getClosePrice()
                 mapRectValue2Real(tmpRectF)
+                //在空心 K 线图中，上涨的蜡烛（阳线）一定是空心的，下跌的蜡烛（阴线）一定是实心的。
                 hollowKChartPaint.style = if (kEntity.getClosePrice() >= kEntity.getOpenPrice()) {
                     // 空心阳线
                     Paint.Style.STROKE
@@ -1019,7 +1039,12 @@ open class KChart(
         canvas.restoreToCount(saveCount)
     }
 
+    /**
+     * 在 Canvas 上绘制 K 线图（蜡烛图）。
+     * K 线图是股票和金融图表中常用的一种表示价格变动的方式，主要用于展示开盘价、收盘价、最高价和最低价。
+     */
     private fun drawCandleKChart(canvas: Canvas) {
+        //创建一个新的绘制层
         val saveCount = canvas.saveLayer(
             getChartMainDisplayArea().left,
             getChartDisplayArea().top,
@@ -1029,30 +1054,38 @@ open class KChart(
         )
 
         candleKChartPaint.strokeWidth = chartConfig.candleChartLineStrokeWidth
-
+        //蜡烛的宽度，取决于 barSpaceRatio 配置。
+        //如果 barSpaceRatio 较小，蜡烛会比较宽；如果 barSpaceRatio 较大，蜡烛之间的间距更宽。
         val barWidth = 1 * (1 - chartConfig.barSpaceRatio)
+        //蜡烛之间的间距。
         val spaceWidth = 1 * chartConfig.barSpaceRatio
+        //第一个蜡烛的起始位置，初始化为 spaceWidth / 2，确保蜡烛不会贴边。
         var left = spaceWidth / 2f
+
         getKEntities().forEachIndexed { idx, kEntity ->
             if (!kEntity.containFlag(FLAG_EMPTY)) {
-                candleKChartPaint.color =
-                    if (isRise(idx)) stockChart.getConfig().riseColor else stockChart.getConfig().downColor
+                //// 设置蜡烛颜色/上下影线颜色
+                candleKChartPaint.color = if (isRise(idx)) stockChart.getConfig().riseColor else stockChart.getConfig().downColor
                 candleKChartPaint.color = candleKChartPaint.color
-                tmp4FloatArray[0] = left + barWidth / 2
-                tmp4FloatArray[1] = kEntity.getHighPrice()
-                tmp4FloatArray[2] = tmp4FloatArray[0]
-                tmp4FloatArray[3] = kEntity.getLowPrice()
+                // 绘制上下影线
+                tmp4FloatArray[0] = left + barWidth / 2 // X 坐标：蜡烛中心
+                tmp4FloatArray[1] = kEntity.getHighPrice()  // Y 坐标：最高价
+                tmp4FloatArray[2] = tmp4FloatArray[0]   // X 坐标：蜡烛中心
+                tmp4FloatArray[3] = kEntity.getLowPrice()   // Y 坐标：最低价
+
                 mapPointsValue2Real(tmp4FloatArray)
                 canvas.drawLines(tmp4FloatArray, candleKChartPaint)
+                // 绘制蜡烛实体（矩形）
                 tmpRectF.left = left
-                tmpRectF.top = kEntity.getOpenPrice()
+                tmpRectF.top = kEntity.getOpenPrice()   // 开盘价
                 tmpRectF.right = left + barWidth
-                tmpRectF.bottom = kEntity.getClosePrice()
+                tmpRectF.bottom = kEntity.getClosePrice()   // 收盘价
                 mapRectValue2Real(tmpRectF)
-                candleKChartPaint.style =
-                    if (tmpRectF.height() == 0f) Paint.Style.STROKE else Paint.Style.FILL
+                // 如果开盘价和收盘价相同，绘制空心矩形，否则填充矩形
+                candleKChartPaint.style = if (tmpRectF.height() == 0f) Paint.Style.STROKE else Paint.Style.FILL
                 canvas.drawRect(tmpRectF, candleKChartPaint)
             }
+            // 移动到下一个蜡烛的起始位置
             left += barWidth + spaceWidth
         }
 

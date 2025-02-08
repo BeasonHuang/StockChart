@@ -48,6 +48,8 @@ class KdjChart(stockChart: IStockChart, chartConfig: KdjChartConfig) :
         indexList = chartConfig.index?.calculate(getKEntities())
     }
 
+    //用于在指定索引范围内（startIndex 到 endIndex）计算数据的 Y 轴最大值和最小值，通常用于股票或K线图的Y轴范围调整。
+    //若最大值和最小值接近（如图表中几乎是平的线），则自动扩展范围以确保图表视觉效果更佳。
     override fun getYValueRange(startIndex: Int, endIndex: Int, result: FloatArray) {
         var yMax = 0f
         var yMin = 0f
@@ -60,7 +62,7 @@ class KdjChart(stockChart: IStockChart, chartConfig: KdjChartConfig) :
                     }
                 }
         }
-
+        //如果 yMax 和 yMin 的差值大于一个阈值（stockChart.getConfig().valueTendToZero），则认为数据是有效的，并直接将 yMin 和 yMax 存入 result 数组。
         if (abs(yMin - yMax) > stockChart.getConfig().valueTendToZero) {
             result[0] = yMin
             result[1] = yMax
