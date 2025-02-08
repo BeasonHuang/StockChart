@@ -64,19 +64,24 @@ internal class ChildChartMatrixHelper<O : BaseChildChartConfig>(
     }
 
     private fun prepareCoordinateMatrix() {
+        //清空当前的 Matrix 对象，确保每次变换时不会叠加之前的变换。
         coordinateMatrix.reset()
-
+        //获取图表的主显示区域，这个区域是最终图形渲染的区域（例如，图表在屏幕上的矩形区域）。
         val chartMainDisplayArea = chart.getChartMainDisplayArea()
-
+        //获取显示的 X 轴数据范围（showStartIndex 和 showEndIndex 决定显示的数据区间），并将结果存储到 tmp2FloatArray 中。
+        //tmp2FloatArray[0] 是 X 轴的起始值，tmp2FloatArray[1] 是 X 轴的结束值。
         chart.getXValueRange(
             stockChart.getConfig().showStartIndex,
             stockChart.getConfig().showEndIndex,
             tmp2FloatArray
         )
+
+        //计算 X 轴的长度（结束值减去起始值）。
         val xValueRangeFrom = tmp2FloatArray[0]
         val xValueRangeEnd = tmp2FloatArray[1]
         val xValueRangeLen = xValueRangeEnd - xValueRangeFrom
-
+        //获取 Y 轴数据范围，存储在 tmp2FloatArray 中。
+        //tmp2FloatArray[0] 是 Y 轴的起始值，tmp2FloatArray[1] 是 Y 轴的结束值。
         chart.getYValueRange(
             stockChart.getConfig().showStartIndex,
             stockChart.getConfig().showEndIndex,
@@ -86,6 +91,20 @@ internal class ChildChartMatrixHelper<O : BaseChildChartConfig>(
         val yValueRangeEnd = tmp2FloatArray[1]
         var yValueRangeLen = yValueRangeEnd - yValueRangeFrom
 
+        /**
+         * . 例子直观展示
+         * 假设我们有以下设置：
+         *
+         * 显示区域：chartMainDisplayArea = RectF(100, 50, 500, 450)，即显示区域从屏幕上的 (100,50) 开始。
+         * 数据：X 轴数据范围是从 x = 10 到 x = 110。
+         * 无平移时的绘制情况：
+         * 数据 x = 10 会被绘制在屏幕的 x = 10，完全在显示区域之外，用户看不到数据。
+         * 数据 x = 100 会被绘制在屏幕的 x = 100，这时数据才进入显示区域，但这显然不是我们想要的效果。
+         * 平移 90 像素后的绘制情况：
+         * 数据 x = 10 被平移到屏幕的 x = 100，正好对齐到显示区域的左边界。
+         * 数据 x = 110 被平移到屏幕的 x = 200，正常绘制在显示区域内。
+         * 效果：所有数据都对齐到显示区域，图表显示完整。
+         */
         if (yValueRangeLen == 0f) {
             // 非正常情况，y轴逻辑区间无法算出（所有值相等），之前处于原始逻辑坐标，将需要显示的逻辑区域移动到显示区域左边垂直居中位置
             coordinateMatrix.postTranslate(
@@ -99,7 +118,8 @@ internal class ChildChartMatrixHelper<O : BaseChildChartConfig>(
                 chartMainDisplayArea.top - yValueRangeFrom
             )
         }
-
+        //sx 是 X 轴的缩放比例，将 X 轴的逻辑范围缩放到显示区域的宽度。
+        //sy 是 Y 轴的缩放比例，如果 Y 轴的范围为零，则不缩放；否则，根据 Y 轴的值范围和显示区域的高度进行缩放。
         val sx = (chartMainDisplayArea.right - chartMainDisplayArea.left) / xValueRangeLen
         val sy = if (yValueRangeLen == 0f) {
             // 非正常情况，y轴逻辑区间无法算出（所有值相等），直接保持原状不缩放

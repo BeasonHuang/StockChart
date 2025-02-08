@@ -152,12 +152,18 @@ open class KChart(
         )
     }
 
+    /**
+     * 这个方法主要是用来计算 K 线图在给定区间 (startIndex 到 endIndex) 内的 Y 轴取值范围。
+     * 它考虑了不同的 K 线类型（如蜡烛图、空心图、柱状图等），并根据数据动态调整 Y 轴的最大值和最小值。
+     */
     override fun getYValueRange(startIndex: Int, endIndex: Int, result: FloatArray) {
 
+        //如果 chartConfig.index 发生变化或未初始化，会重新计算指标数据。
         if (chartConfig.index == null || chartConfig.index != lastCalculateIndexType) {
             calculateIndexList()
         }
-
+        //检查是否有预设的 Y 轴最小值和最大值
+        //如果 chartConfig 中已经定义了 yValueMin 和 yValueMax，直接使用这些值并返回。
         if (chartConfig.yValueMin != null && chartConfig.yValueMax != null) {
             result[0] = chartConfig.yValueMin!!
             result[1] = chartConfig.yValueMax!!
@@ -173,6 +179,9 @@ open class KChart(
             )
         }
             .apply {
+                //根据 K 线类型计算 Y 轴范围
+                //蜡烛图/空心图/柱状图：取 LowPrice 的最小值和 HighPrice 的最大值。
+                //其他图表类型：使用 ClosePrice 和可能的 AvgPrice（如果需要绘制平均线）来更新 Y 轴范围。
                 when (chartConfig.kChartType) {
                     is KChartConfig.KChartType.CANDLE, is KChartConfig.KChartType.HOLLOW, is KChartConfig.KChartType.BAR -> {
                         yMin = minByOrNull { it.getLowPrice() }?.getLowPrice() ?: 0f
@@ -199,6 +208,8 @@ open class KChart(
                 }
             }
 
+        //遍历指标数据 indexList，调整 Y 轴范围
+        //在已有基础上进一步调整 Y 轴范围，以确保所有指标数据也在范围内。
         indexList?.forEach { valueList ->
             valueList.filterIndexed { idx, _ -> idx in startIndex..endIndex }.filterNotNull()
                 .apply {
@@ -209,6 +220,8 @@ open class KChart(
                 }
         }
 
+        //处理 Y 轴范围接近 0 的情况
+        //如果最大值和最小值非常接近，使用一个 delta 值扩展 Y 轴范围，防止图表过于扁平。
         if (abs(yMin - yMax) > stockChart.getConfig().valueTendToZero) {
             result[0] = yMin
             result[1] = yMax
@@ -220,6 +233,8 @@ open class KChart(
             result[0] = yMin - delta
             result[1] = yMax + delta
         }
+        //最后检查是否有预设 Y 轴值
+        //如果 chartConfig 在最后提供了 Y 轴的最小值或最大值，覆盖之前的计算结果。
         chartConfig.yValueMin?.apply { result[0] = this }
         chartConfig.yValueMax?.apply { result[1] = this }
     }
