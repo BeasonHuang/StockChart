@@ -130,7 +130,6 @@ class Sample2Activity : AppCompatActivity() , StockTimer.StockTimeListener{
 
         // 切换到到日K，首次加载数据
         changePeriod(Period.DAY)
-        StockTimer.startStockTimer(DataMock.date, this)
     }
 
     /**
@@ -440,7 +439,7 @@ class Sample2Activity : AppCompatActivity() , StockTimer.StockTimeListener{
             }
             isLoading = false
         }
-
+        StockTimer.stopStockTimer()
         when (period) {
             Period.DAY -> {
                 DataMock.loadDayData(this, page) { list ->
@@ -500,6 +499,7 @@ class Sample2Activity : AppCompatActivity() , StockTimer.StockTimeListener{
             Period.DAY_TIME -> {
                 DataMock.loadDayTimeData(this) { list ->
                     doAfterLoad(list, null, TimeBarConfig.Type.DayTime())
+                    StockTimer.startStockTimer(DataMock.date, this)
                 }
             }
         }
@@ -514,7 +514,7 @@ class Sample2Activity : AppCompatActivity() , StockTimer.StockTimeListener{
                     overScrollAble = false
                 }
                 kChartConfig.apply {
-                    showAvgLine = true // 显示分时均线
+                    showAvgLine = false // 显示分时均线
                     index = null
                     kChartType = KChartConfig.KChartType.LINE()
                 }
