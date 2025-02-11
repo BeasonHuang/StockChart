@@ -130,6 +130,7 @@ internal class ChildChartMatrixHelper<O : BaseChildChartConfig>(
         }
 
         // 缩放使得需要显示的内容刚好撑满显示区域，再向上翻转，使得y内容翻转在显示区域上方
+        //-sy：负的 Y 轴缩放因子，这是 Y 轴反转的核心。将 Y 轴的数据反转，使得 Y 轴从 上往下递增 变成 下往上递增。
         coordinateMatrix.postScale(
             sx,
             -sy,

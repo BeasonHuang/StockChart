@@ -161,7 +161,7 @@ class Sample2Activity : AppCompatActivity() , StockTimer.StockTimeListener{
             // 最大缩放比例
             scaleFactorMax = 2f
 
-            scrollSmoothly = false
+            scrollSmoothly = true
 
             // 最小缩放比例
             scaleFactorMin = 0.5f
